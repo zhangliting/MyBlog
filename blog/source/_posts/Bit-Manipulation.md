@@ -1,0 +1,156 @@
+---
+title: Bit Manipulation
+tags: [Bit,算法]
+categories: [算法]
+photo:
+  - /images/bit.jpg
+date: 2017-04-25 21:54:28
+---
+
+一些使用位操作提高性能的算法和技巧.
+
+<!--more-->
+## 判断一个整数是2的幂
+
+常规的方法：O(logN)
+```C
+bool isPowerOfTwo(int x)
+    {
+        if(x == 0)
+            return false;
+        else
+        {
+            while(x % 2 == 0) x /= 2;
+            return (x == 1);
+            }
+    }
+```
+通过观察发现，整数X和X-1具有相同的部分，**除了X的二进制最右边的1以及1右边的比特位**，都是通过X反转而成。
+比如：
+
+> 
+Let, x = 4 = (`100`)
+x - 1 = 3 = (`011`)
+Let, x = 6 = (1`10`)
+x - 1 = 5 = (1`01`)
+
+所以使用X&(X-1)可以消除最右边的1比特位。因为整数不是0且是2的幂，有且只有一个比特位是1，消除了一个，就是0了
+```c
+bool isPowerOfTwo(int x)
+    {
+        // x will check if x == 0 and !(x & (x - 1)) will check if x is a power of 2 or not
+        return (x && !(x & (x - 1)));
+    }
+```
+
+## 计算1比特的个数
+
+原理同上：只需要K次就能消除所有的1比特位，所以O(K)。K就是1的个数。
+```c
+int count_one (int n)
+        {
+            while( n )
+            {
+            n = n&(n-1);
+               count++;
+            }
+            return count;
+    }
+```
+
+## 判断第i个比特位置1 or 0
+利用 `1 << i == 2^i`
+比如：
+N=20={10100},判断第二个比特位置（从0开始）。1 << 2={100}。{10100} & {100} = {100} = 22 = 4(non-zero number)
+```c
+bool check (int N)
+    {
+        if( N & (1 << i) )
+            return true;
+        else
+            return false;
+    }
+```
+
+## 生成集合的子集
+
+**拥有N个元素的子集个数是2^N。**
+我们可以用1 or 0 表示是否出现在子集中。
+如：
+> 
+A = {a, b, c}
+>
+0 = (000)2 = {}
+1 = (001)2 = {c}
+2 = (010)2 = {b}
+3 = (011)2 = {b, c}
+4 = (100)2 = {a}
+5 = (101)2 = {a, c}
+6 = (110)2 = {a, b}
+7 = (111)2 = {a, b, c}
+
+```c++
+ void possibleSubsets(char A[], int N)
+    {
+        //0 - 2^N
+        for(int i = 0;i < (1 << N); ++i)
+        {
+            for(int j = 0;j < N;++j)
+                if(i & (1 << j))
+                    cout << A[j] << ‘ ‘;
+            cout << endl;
+    }
+    }
+```
+
+## 找出不大于N的最大的2的幂
+
+思路：找到权重最大的1(最左边），将它右边的所有位设置1。这时所有位置都是1，加1就是大于N的2的幂，右移1位就是不大于的最大的2的幂。
+如：
+N=21={`10101`}，这里权重最大的1在第四位置（从0开始），所以答案是2^4=16。
+改变权重最大的1右边所有的值为1。
+即`{11111}=31=N+(N-1)=2*N-1=21=Y`。答案是`(Y+1) >> 1 `
+
+所以现在的问题是怎么讲右边的都置1。
+比如：N={1000000000000000}
+
+`N = N | (N >> 1)`
+![1](https://he-s3.s3.amazonaws.com/media/uploads/3fb910b.jpg)
+`N = N | (N >> 2)`
+![2](https://he-s3.s3.amazonaws.com/media/uploads/4682f09.jpg)
+`N = N | (N >> 4)`
+![3](https://he-s3.s3.amazonaws.com/media/uploads/53261d4.jpg)
+`N = N| (N >> 8)`
+![4](https://he-s3.s3.amazonaws.com/media/uploads/5f05f51.jpg)
+
+实现
+```c
+long largest_power(long N)
+    {
+        //changing all right side bits to 1.
+        N = N| (N>>1);
+        N = N| (N>>2);
+        N = N| (N>>4);
+        N = N| (N>>8);
+
+
+    //as now the number is 2 * x-1, where x is required answer, so adding 1 and dividing it by 2. 
+        return (N+1)>>1;
+
+    }
+```
+
+## 其他技巧
+
+**x ^ ( x & (x-1))** 返回X最后面的1比特的二进制形式。
+例如：
+> 
+x = 10 = (1010)2 ` x & (x-1) = (1010)2 & (1001)2 = (1000)2
+x ^ (x & (x-1)) = (1010)2 ^ (1000)2 = (0010)2
+
+**x & (-x)** 也可以实现
+例如：
+> 
+x = 10 = (1010)2
+(-x) = -10 = (0110)2 补码=反码+1
+x & (-x) = (1010)2 & (0110)2 = (0010)2
